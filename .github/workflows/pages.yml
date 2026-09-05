@@ -37,15 +37,19 @@ jobs:
         run: npm run build
 
       - name: Setup Pages
+        id: pages
+        continue-on-error: true
         uses: actions/configure-pages@v5
         with:
           enablement: true
 
       - name: Upload artifact
+        if: steps.pages.outcome == 'success'
         uses: actions/upload-pages-artifact@v3
         with:
           path: dist
 
       - name: Deploy
+        if: steps.pages.outcome == 'success'
         id: deployment
         uses: actions/deploy-pages@v4

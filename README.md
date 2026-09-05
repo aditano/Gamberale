@@ -10,6 +10,10 @@ OpenStreetMap. House packing in the historic core is densified because OSM only
 maps a few dozen buildings. Materials and the castle/church silhouettes follow
 photographs and written sources, not photogrammetry.
 
+If that live URL 404s on a brand-new repo, open **Settings → Pages** and set
+the source to **GitHub Actions**, or **Deploy from a branch** `main` / `docs`.
+A static build already lives in [`docs/`](./docs/).
+
 ## Look around
 
 - Click **Walk the village**, then look with the mouse
