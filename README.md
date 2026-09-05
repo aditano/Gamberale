@@ -8,11 +8,7 @@ Live: [aditano.github.io/Gamberale](https://aditano.github.io/Gamberale/)
 This is a **first draft**. Landmark footprints and streets come from
 OpenStreetMap. House packing in the historic core is densified because OSM only
 maps a few dozen buildings. Materials and the castle/church silhouettes follow
-photographs and written sources, not photogrammetry.
-
-If that live URL 404s on a brand-new repo, open **Settings → Pages** and set
-the source to **GitHub Actions**, or **Deploy from a branch** `main` / `docs`.
-A static build already lives in [`docs/`](./docs/).
+photographs and written descriptions, not photogrammetry.
 
 ## Look around
 
@@ -20,14 +16,20 @@ A static build already lives in [`docs/`](./docs/).
 - **WASD** walk, **Shift** hurry, **Esc** release the pointer
 - On a phone: left side moves, right side looks
 - Jump to San Lorenzo, the castle, the piazza, or the ridge
+- **Research notes** in the overlay for the dossier that built the scene
 
 ## Research
 
 Everything used to build the scene is in [`research/`](./research/README.md):
-geography, history, architecture, OSM notes, sources.
+geography, history, architecture, economy, visual notes, OSM notes, sources.
 
 Processed map: [`public/data/gamberale.json`](./public/data/gamberale.json)
 (ODbL 1.0 for OSM-derived geometry).
+
+## GitHub Pages
+
+The site deploys from GitHub Actions (`dist/`). A static copy also lives in
+`docs/` so the repo can be served from `main /docs` if needed.
 
 ## Run locally
 
@@ -38,4 +40,4 @@ npm run dev
 
 ## Stack
 
-Three.js, React, Vite. Procedural canvas textures. No photogrammetry scans.
+Three.js, React, Vite. Procedural canvas textures. Preetham sky. No photogrammetry scans.

@@ -112,6 +112,29 @@ button:not(:disabled), [role="button"]:not(:disabled) { cursor: pointer; }
 .village-primary:hover { opacity: 0.92; }
 .village-primary:active { transform: scale(0.98); }
 
+.village-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.village-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid color-mix(in oklab, var(--color-fg) 18%, transparent);
+  background: rgb(18 17 15 / 0.45);
+  color: var(--color-fg);
+  padding: 12px 20px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  min-height: 44px;
+}
+
+.village-ghost:hover { opacity: 0.9; }
+
 .village-hint {
   margin: 12px 0 0;
   color: var(--color-subtle);
@@ -177,11 +200,40 @@ button:not(:disabled), [role="button"]:not(:disabled) { cursor: pointer; }
   background: rgb(18 17 15 / 0.35);
 }
 
-.village-look-hint {
+.village-place-body {
   position: absolute;
-  right: 24px;
-  bottom: 36px;
+  left: 16px;
+  right: 16px;
+  bottom: 28px;
+  margin: 0;
+  max-width: 28rem;
+  color: var(--color-fg);
+  background: rgb(18 17 15 / 0.62);
+  border: 1px solid color-mix(in oklab, var(--color-fg) 12%, transparent);
+  border-radius: 16px;
+  padding: 12px 14px;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  pointer-events: none;
 }
+
+.village-crosshair {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  margin: -5px 0 0 -5px;
+  border: 1px solid rgb(242 238 230 / 0.55);
+  border-radius: 999px;
+  pointer-events: none;
+}
+
+@media (pointer: coarse) {
+  .village-place-body { bottom: 130px; }
+  .village-crosshair { display: none; }
+}
+
 
 @media (pointer: coarse) {
   .village-touch { display: block; }

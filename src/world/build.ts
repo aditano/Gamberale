@@ -11,10 +11,25 @@ export type Buckets = {
   roof: THREE.BufferGeometry[];
   wood: THREE.BufferGeometry[];
   dark: THREE.BufferGeometry[];
+  shutterGreen: THREE.BufferGeometry[];
+  shutterBrown: THREE.BufferGeometry[];
+  shutterBlue: THREE.BufferGeometry[];
+  copper: THREE.BufferGeometry[];
 };
 
 export function emptyBuckets(): Buckets {
-  return { plaster: [], plasterWarm: [], stone: [], roof: [], wood: [], dark: [] };
+  return {
+    plaster: [],
+    plasterWarm: [],
+    stone: [],
+    roof: [],
+    wood: [],
+    dark: [],
+    shutterGreen: [],
+    shutterBrown: [],
+    shutterBlue: [],
+    copper: [],
+  };
 }
 
 export function wallQuad(
@@ -74,7 +89,7 @@ export function addHouse(b: Building, buckets: Buckets, colliders: Collider[]) {
   const fp = b.footprint;
   if (fp.length < 4) return;
   const y0 = heightAt(b.center[0], b.center[1]) - 0.15;
-  const floors = b.floors ?? 2;
+  const floors = Math.min(3, Math.max(1, b.floors ?? 2));
   const h = 2.7 * floors + 0.35;
   const variant = b.variant ?? 0;
   const wallBucket =
@@ -83,6 +98,8 @@ export function addHouse(b: Building, buckets: Buckets, colliders: Collider[]) {
       : variant % 6 === 4
         ? buckets.plasterWarm
         : buckets.plaster;
+  const shutterBucket =
+    variant % 3 === 0 ? buckets.shutterGreen : variant % 3 === 1 ? buckets.shutterBrown : buckets.shutterBlue;
 
   let minX = Infinity,
     maxX = -Infinity,
@@ -115,8 +132,11 @@ export function addHouse(b: Building, buckets: Buckets, colliders: Collider[]) {
         const yaw = Math.atan2(c[0] - a[0], c[1] - a[1]);
         const wy = y0 + 1.15 + (k % 2) * 0.05 + Math.min(floors - 1, 1) * 1.15;
         buckets.dark.push(boxAt(wx, wy + 0.55, wz, 0.72, 1.05, 0.08, yaw));
-        buckets.wood.push(boxAt(wx + nx * 0.06, wy + 0.55, wz + nz * 0.06, 0.18, 1.08, 0.06, yaw));
-        buckets.wood.push(boxAt(wx - nx * 0.06 + (c[0] - a[0]) * 0.002, wy + 0.55, wz, 0.18, 1.08, 0.06, yaw));
+        shutterBucket.push(boxAt(wx + nx * 0.05 + (c[0] - a[0]) / len * 0.42, wy + 0.55, wz + nz * 0.05, 0.16, 1.08, 0.06, yaw));
+        shutterBucket.push(boxAt(wx + nx * 0.05 - (c[0] - a[0]) / len * 0.42, wy + 0.55, wz + nz * 0.05, 0.16, 1.08, 0.06, yaw));
+        if (k % 2 === 0 && floors > 1) {
+          buckets.wood.push(boxAt(wx + nx * 0.18, wy - 0.15, wz + nz * 0.18, 0.7, 0.16, 0.28, yaw));
+        }
       }
       if (len > 4.2 && i % 2 === 0) {
         const t = 0.22;
@@ -124,13 +144,13 @@ export function addHouse(b: Building, buckets: Buckets, colliders: Collider[]) {
         const mz = a[1] + (c[1] - a[1]) * t;
         const nx = (a[1] - c[1]) / len;
         const nz = (c[0] - a[0]) / len;
-        buckets.wood.push(boxAt(mx + nx * 0.14, y0 + 1.15, mz + nz * 0.14, 0.95, 2.15, 0.12, Math.atan2(c[0] - a[0], c[1] - a[1])));
+        buckets.wood.push(
+          boxAt(mx + nx * 0.14, y0 + 1.15, mz + nz * 0.14, 0.95, 2.15, 0.12, Math.atan2(c[0] - a[0], c[1] - a[1])),
+        );
       }
     }
   }
 
-  const xs = fp.map((p) => p[0]);
-  const zs = fp.map((p) => p[1]);
   let longest = 0;
   let lx = 1,
     lz = 0;
@@ -177,8 +197,12 @@ export function addHouse(b: Building, buckets: Buckets, colliders: Collider[]) {
   roofGeo.setAttribute("position", new THREE.Float32BufferAttribute(p, 3));
   roofGeo.computeVertexNormals();
   buckets.roof.push(withUv(roofGeo));
+  buckets.stone.push(boxAt(cx + lx * hw * 0.2, yE + ridge + 0.4, cz + lz * hw * 0.2, 0.48, 0.9, 0.48));
 
-  buckets.stone.push(boxAt(cx + lx * hw * 0.2, yE + ridge + 0.35, cz + lz * hw * 0.2, 0.45, 0.85, 0.45));
+  if (variant % 7 === 0) {
+    buckets.copper.push(boxAt(cx - lx * hw * 0.3, yE + ridge * 0.35, cz - lz * hw * 0.3, 0.55, 0.08, 0.55, 0.4));
+    buckets.dark.push(boxAt(cx - lx * hw * 0.3, yE + ridge * 0.35 + 0.25, cz - lz * hw * 0.3, 0.08, 0.45, 0.08));
+  }
 
   colliders.push({
     minX: minX + 0.15,
@@ -194,8 +218,7 @@ export function addCastle(b: Building, buckets: Buckets, colliders: Collider[], 
   const y0 = heightAt(cx, cz) - 0.2;
   const yaw = Math.atan2(1.0, 0.55);
 
-  const keep = boxAt(cx, y0 + 4.2, cz, 16.5, 8.4, 12.4, yaw);
-  buckets.plaster.push(keep);
+  buckets.plaster.push(boxAt(cx, y0 + 4.2, cz, 16.5, 8.4, 12.4, yaw));
   buckets.stone.push(boxAt(cx, y0 + 1.4, cz, 17.2, 2.8, 13.0, yaw));
 
   const apse = new THREE.CylinderGeometry(5.4, 5.6, 7.2, 14, 1, false, Math.PI * 0.15, Math.PI * 0.85);
@@ -210,11 +233,16 @@ export function addCastle(b: Building, buckets: Buckets, colliders: Collider[], 
   buckets.stone.push(boxAt(tx, y0 + 8.5, tz, 5.6, 17.2, 5.6, yaw));
   buckets.plaster.push(boxAt(tx, y0 + 11.5, tz, 5.2, 12.4, 5.2, yaw));
 
+  for (let i = 0; i < 10; i++) {
+    const a = (i / 10) * Math.PI * 2;
+    const mx = tx + Math.cos(a + yaw) * 2.45;
+    const mz = tz + Math.sin(a + yaw) * 2.45;
+    if (i % 2 === 0) buckets.stone.push(boxAt(mx, y0 + 17.7, mz, 1.1, 1.45, 1.1, yaw));
+  }
+  const keepTop = y0 + 8.4;
   for (let i = 0; i < 8; i++) {
-    const a = (i / 8) * Math.PI * 2;
-    const mx = tx + Math.cos(a + yaw) * 2.35;
-    const mz = tz + Math.sin(a + yaw) * 2.35;
-    if (i % 2 === 0) buckets.stone.push(boxAt(mx, y0 + 17.6, mz, 1.05, 1.35, 1.05, yaw));
+    const t = (i / 8 - 0.5) * 15;
+    buckets.stone.push(boxAt(cx + Math.cos(yaw) * t, keepTop + 0.55, cz + Math.sin(yaw) * t, 1.05, 1.15, 0.7, yaw));
   }
 
   const merlonRing = new THREE.TorusGeometry(2.55, 0.18, 6, 16);
@@ -249,15 +277,7 @@ export function addCastle(b: Building, buckets: Buckets, colliders: Collider[], 
     buckets.stone.push(col);
   }
   buckets.stone.push(
-    boxAt(
-      cx + Math.sin(doorDir) * 7.4,
-      y0 + 4.9,
-      cz + Math.cos(doorDir) * 7.4,
-      7.4,
-      0.35,
-      1.6,
-      yaw,
-    ),
+    boxAt(cx + Math.sin(doorDir) * 7.4, y0 + 4.9, cz + Math.cos(doorDir) * 7.4, 7.4, 0.35, 1.6, yaw),
   );
 
   for (let i = 0; i < 6; i++) {
@@ -313,16 +333,20 @@ export function addChurch(b: Building, buckets: Buckets, colliders: Collider[]) 
   buckets.stone.push(boxAt(bx, y0 + 15.2, bz, 4.0, 0.5, 4.0, yaw));
   buckets.dark.push(boxAt(bx, y0 + 11.4, bz + 0.1, 1.2, 1.8, 0.2, yaw));
   buckets.dark.push(boxAt(bx, y0 + 13.2, bz + 0.1, 1.2, 1.8, 0.2, yaw));
+  const bell = new THREE.SphereGeometry(0.28, 10, 8);
+  bell.translate(bx, y0 + 12.4, bz);
+  buckets.copper.push(bell);
 
-  const crossV = boxAt(bx, y0 + 16.5, bz, 0.12, 1.8, 0.12, yaw);
-  const crossH = boxAt(bx, y0 + 16.9, bz, 0.9, 0.12, 0.12, yaw);
-  buckets.dark.push(crossV, crossH);
+  buckets.dark.push(boxAt(bx, y0 + 16.5, bz, 0.12, 1.8, 0.12, yaw));
+  buckets.dark.push(boxAt(bx, y0 + 16.9, bz, 0.9, 0.12, 0.12, yaw));
 
   buckets.wood.push(boxAt(cx - lx * 9.1, y0 + 2.2, cz - lz * 9.1, 1.6, 3.4, 0.22, yaw));
   const occ = new THREE.CircleGeometry(0.7, 16);
   occ.rotateY(yaw);
   occ.translate(cx - lx * 9.22, y0 + 6.4, cz - lz * 9.22);
   buckets.dark.push(occ);
+  buckets.stone.push(boxAt(cx - lx * 9.05, y0 + 4.2, cz - lz * 9.05, 0.45, 8.4, 0.45, yaw));
+  buckets.stone.push(boxAt(cx - lx * 9.05 + px * 4.8, y0 + 4.2, cz - lz * 9.05 + pz * 4.8, 0.45, 8.4, 0.45, yaw));
 
   colliders.push({ minX: cx - 10, maxX: cx + 10, minZ: cz - 8, maxZ: cz + 8 });
   colliders.push({ minX: bx - 2.2, maxX: bx + 2.2, minZ: bz - 2.2, maxZ: bz + 2.2 });

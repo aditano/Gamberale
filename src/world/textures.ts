@@ -35,6 +35,7 @@ export type VillageTextures = {
   wood: THREE.CanvasTexture;
   clock: THREE.CanvasTexture;
   dirt: THREE.CanvasTexture;
+  rock: THREE.CanvasTexture;
 };
 
 function tex(c: HTMLCanvasElement, repeatX = 1, repeatY = 1) {
@@ -52,9 +53,9 @@ export function makeTextures(): VillageTextures {
     const { c, ctx } = canvas(256);
     ctx.fillStyle = "#efe8d8";
     ctx.fillRect(0, 0, 256, 256);
-    for (let i = 0; i < 40; i++) {
-      ctx.fillStyle = `rgba(180,160,130,${0.04 + Math.random() * 0.06})`;
-      ctx.fillRect(Math.random() * 256, Math.random() * 256, 20 + Math.random() * 50, 8 + Math.random() * 18);
+    for (let i = 0; i < 55; i++) {
+      ctx.fillStyle = `rgba(180,160,130,${0.04 + Math.random() * 0.07})`;
+      ctx.fillRect(Math.random() * 256, Math.random() * 256, 16 + Math.random() * 48, 6 + Math.random() * 16);
     }
     noise(ctx, 256, 0.08);
     return tex(c, 2, 2);
@@ -62,8 +63,12 @@ export function makeTextures(): VillageTextures {
 
   const plasterWarm = (() => {
     const { c, ctx } = canvas(256);
-    ctx.fillStyle = "#e4d4b8";
+    ctx.fillStyle = "#e6d3b4";
     ctx.fillRect(0, 0, 256, 256);
+    for (let i = 0; i < 30; i++) {
+      ctx.fillStyle = `rgba(160,120,80,${0.04 + Math.random() * 0.06})`;
+      ctx.fillRect(Math.random() * 256, Math.random() * 256, 12 + Math.random() * 40, 8);
+    }
     noise(ctx, 256, 0.1);
     return tex(c, 2, 2);
   })();
@@ -95,7 +100,7 @@ export function makeTextures(): VillageTextures {
     const { c, ctx } = canvas(512);
     ctx.fillStyle = "#8a8376";
     ctx.fillRect(0, 0, 512, 512);
-    for (let i = 0; i < 900; i++) {
+    for (let i = 0; i < 1100; i++) {
       const x = Math.random() * 512;
       const y = Math.random() * 512;
       const r = 4 + Math.random() * 7;
@@ -111,31 +116,31 @@ export function makeTextures(): VillageTextures {
 
   const roof = (() => {
     const { c, ctx } = canvas(256);
-    ctx.fillStyle = "#8f3e28";
+    ctx.fillStyle = "#7a3420";
     ctx.fillRect(0, 0, 256, 256);
-    for (let y = 0; y < 256; y += 10) {
-      ctx.fillStyle = y % 20 === 0 ? "#a24a30" : "#7a3422";
-      ctx.fillRect(0, y, 256, 8);
-      ctx.strokeStyle = "rgba(50,16,10,0.35)";
-      ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(256, y);
-      ctx.stroke();
-      const shift = (y / 10) % 2 === 0 ? 0 : 9;
-      for (let x = shift; x < 256; x += 18) {
-        ctx.strokeStyle = "rgba(40,12,8,0.25)";
-        ctx.strokeRect(x, y, 16, 8);
+    for (let y = 0; y < 256; y += 9) {
+      const shift = (y / 9) % 2 === 0 ? 0 : 10;
+      for (let x = shift - 10; x < 256; x += 20) {
+        const r = 130 + Math.random() * 40;
+        const g = 48 + Math.random() * 22;
+        const b = 28 + Math.random() * 14;
+        ctx.fillStyle = `rgb(${r},${g},${b})`;
+        ctx.beginPath();
+        ctx.ellipse(x + 10, y + 5, 9, 4.2, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "rgba(50,16,10,0.35)";
+        ctx.stroke();
       }
     }
-    noise(ctx, 256, 0.08);
-    return tex(c, 3, 3);
+    noise(ctx, 256, 0.07);
+    return tex(c, 4, 4);
   })();
 
   const grass = (() => {
     const { c, ctx } = canvas(256);
     ctx.fillStyle = "#3d5a34";
     ctx.fillRect(0, 0, 256, 256);
-    for (let i = 0; i < 1200; i++) {
+    for (let i = 0; i < 1400; i++) {
       ctx.strokeStyle = `rgba(${40 + Math.random() * 40},${80 + Math.random() * 70},${30},0.5)`;
       const x = Math.random() * 256;
       const y = Math.random() * 256;
@@ -202,7 +207,30 @@ export function makeTextures(): VillageTextures {
     return tex(c, 6, 6);
   })();
 
-  return { plaster, plasterWarm, stone, cobble, roof, grass, wood, clock, dirt };
+  const rock = (() => {
+    const { c, ctx } = canvas(512);
+    ctx.fillStyle = "#6e675c";
+    ctx.fillRect(0, 0, 512, 512);
+    for (let i = 0; i < 80; i++) {
+      const s = 90 + Math.random() * 50;
+      ctx.fillStyle = `rgb(${s + 10},${s},${s - 12})`;
+      ctx.beginPath();
+      ctx.ellipse(
+        Math.random() * 512,
+        Math.random() * 512,
+        18 + Math.random() * 40,
+        10 + Math.random() * 24,
+        Math.random(),
+        0,
+        Math.PI * 2,
+      );
+      ctx.fill();
+    }
+    noise(ctx, 512, 0.1);
+    return tex(c, 4, 4);
+  })();
+
+  return { plaster, plasterWarm, stone, cobble, roof, grass, wood, clock, dirt, rock };
 }
 
 export function disposeTextures(t: VillageTextures) {

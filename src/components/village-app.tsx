@@ -18,6 +18,7 @@ export function VillageApp() {
   const [error, setError] = useState<string | null>(null);
   const [walking, setWalking] = useState(false);
   const [place, setPlace] = useState("Gamberale");
+  const [placeBody, setPlaceBody] = useState("");
   const [research, setResearch] = useState(false);
   const [yaw, setYaw] = useState(0);
 
@@ -39,7 +40,10 @@ export function VillageApp() {
           canvas: canvasRef.current,
           data,
           walkingRef,
-          onPlace: setPlace,
+          onPlace: (name, body) => {
+            setPlace(name);
+            setPlaceBody(body ?? "");
+          },
         });
         handleRef.current = handle;
         setReady(true);
@@ -107,19 +111,25 @@ export function VillageApp() {
             <h1>Gamberale</h1>
             <p className="village-lede">
               A first-draft 3D walk through the historic borgo: Castello, San Lorenzo
-              Martire, and the stone houses on Monte Sant'Antonio.
+              Martire, and the stone houses packed onto Monte Sant'Antonio.
             </p>
-            <button type="button" className="village-primary" onClick={enter}>
-              <Footprints size={18} strokeWidth={1.75} />
-              Walk the village
-            </button>
+            <div className="village-actions">
+              <button type="button" className="village-primary" onClick={enter}>
+                <Footprints size={18} strokeWidth={1.75} />
+                Walk the village
+              </button>
+              <button type="button" className="village-ghost" onClick={() => setResearch(true)}>
+                <BookOpen size={16} strokeWidth={1.75} />
+                Research notes
+              </button>
+            </div>
             <p className="village-hint">
               Click to look · WASD to walk · Shift to hurry · Esc to release
             </p>
             <div className="village-facts">
               <span>1,343 m</span>
               <span>Maiella National Park</span>
-              <span>~280 gamberalesi</span>
+              <span>~260 gamberalesi</span>
             </div>
           </div>
         </div>
@@ -148,6 +158,8 @@ export function VillageApp() {
           <button type="button" className="village-chip" onClick={leave}>
             Leave walk
           </button>
+          {placeBody ? <p className="village-place-body">{placeBody}</p> : null}
+          <div className="village-crosshair" aria-hidden="true" />
           <div className="village-touch" aria-hidden="true">
             <div className="village-stick" />
             <p>Move</p>
@@ -167,20 +179,26 @@ export function VillageApp() {
           <div className="village-research-body">
             <p>
               Gamberale is the highest comune in the Province of Chieti, 1,343 m on a
-              spur of Monte Sant'Antonio in Maiella National Park. The castle,
-              parish church, and town hall sit on OpenStreetMap footprints. Streets
-              are OSM centrelines. Extra houses fill the historic core because OSM
-              only maps 34 buildings.
+              spur of Monte Sant'Antonio in Maiella National Park. About 260 people
+              live here (2026). The castle, San Lorenzo, and the town hall sit on
+              OpenStreetMap footprints. Streets are OSM centrelines. Extra houses fill
+              the historic core because OSM only maps 34 buildings.
             </p>
             <p>
               The white clock-tower with battlements and a radio antenna is the
               post-1984 pseudo-medieval rebuild, not a medieval ruin. San Lorenzo is
               an 18th-century single-nave church with a side campanile. Coat of arms:
-              silver field, red crayfish.
+              silver field, red crayfish. Patron: San Lorenzo, 10 August. Sagra
+              dell'agnello in early August.
             </p>
             <p>
-              Sources and method notes live in the GitHub repo under{" "}
-              <code>research/</code>. This is a walkable sketch, not photogrammetry.
+              First named <em>Gambarum in Valva</em> in 1063. Last feudal lords: the
+              Mascitelli of Atessa (from 1777). Gustav Line, 1943–44: about 200
+              civilian deaths; Medaglia d'Argento al Merito Civile, 2005.
+            </p>
+            <p>
+              Sources and method notes live in the repo under <code>research/</code>.
+              This is a walkable sketch, not photogrammetry.
             </p>
           </div>
         </aside>

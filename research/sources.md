@@ -1,7 +1,8 @@
 # Sources
 
-Consulted 5 September 2026 for this first draft. All web pages retrieved
-that day; OSM timestamp `2026-09-05T17:13:06Z`.
+Consulted 5 September 2026 for this first draft. OSM timestamp
+`2026-09-05T17:13:06Z`. Second pass the same day added the comune site,
+ItalyHeritage, Tuttitalia, and the 2026 civic notices.
 
 ## Primary / official
 
@@ -9,6 +10,7 @@ that day; OSM timestamp `2026-09-05T17:13:06Z`.
 - OpenStreetMap Overpass extract, 450 m around 41.9045, 14.2103 (ODbL 1.0)
 - OpenTopoData ASTER 30 m elevations
 - Stemma: Wikimedia `Gamberale-Stemma.svg`
+- Tuttitalia comune profile (population 267 on 1 Jan 2026; coords 41.9070 N, 14.2082 E)
 
 ## Encyclopedic
 
@@ -20,7 +22,6 @@ that day; OSM timestamp `2026-09-05T17:13:06Z`.
 ## Tourism / local history
 
 - Regione Abruzzo turismo, Gamberale
-  http://www.abruzzoturismo.it/en/destination/gamberale
 - Italia / Abruzzo tourism pages (coords 41.90565, 14.20781)
 - ItalyHeritage, Gamberale (Abruzzo / Chieti)
   https://italyheritage.com/regions/abruzzo/chieti/gamberale.htm
@@ -29,7 +30,8 @@ that day; OSM timestamp `2026-09-05T17:13:06Z`.
 - AbruzzoCitta / Italiamappata comune profile (population, frazioni)
 - Italiamappe stradario (street list)
 - Nunzio Pollice, *Gamberale. Il cammino della storia del paese più alto
-  dell’Abruzzo chietino* (cited by IT Wikipedia for WWII)
+  dell’Abruzzo chietino* (2018; cited by IT Wikipedia for WWII)
+- Citypopulation.info / ISTAT series (668 in 1981 → 267 in 2025 estimate)
 
 ## Photographs used as visual reference (not copied into textures)
 

@@ -9,6 +9,7 @@ import {
   mergeBucket,
   streetRibbon,
 } from "./build";
+import { addCemetery, addClouds, addHorizon, addSky, addTerrain, addTrees } from "./environment";
 import { heightAt } from "./height";
 import { disposeTextures, makeTextures } from "./textures";
 import type { Collider, Landmark, VillageData } from "./types";
@@ -23,7 +24,7 @@ export type VillageHandle = {
 type MountOpts = {
   canvas: HTMLCanvasElement;
   data: VillageData;
-  onPlace?: (name: string) => void;
+  onPlace?: (name: string, body?: string) => void;
   walkingRef: { current: boolean };
 };
 
@@ -40,13 +41,10 @@ export function mountVillage(opts: MountOpts): VillageHandle {
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.12;
+  renderer.toneMappingExposure = 1.18;
 
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color("#87a8c4");
-  scene.fog = new THREE.FogExp2("#93b0c9", 0.0048);
-
-  const camera = new THREE.PerspectiveCamera(72, 1, 0.12, 1800);
+  const camera = new THREE.PerspectiveCamera(72, 1, 0.12, 2800);
   const yawObject = new THREE.Object3D();
   const pitchObject = new THREE.Object3D();
   pitchObject.add(camera);
@@ -63,20 +61,20 @@ export function mountVillage(opts: MountOpts): VillageHandle {
   yawObject.rotation.y = yaw;
   pitchObject.rotation.x = pitch;
 
-  const hemi = new THREE.HemisphereLight("#d7e6f5", "#6a5a42", 0.72);
+  const hemi = new THREE.HemisphereLight("#d7e6f5", "#6a5a42", 0.78);
   scene.add(hemi);
-  const sun = new THREE.DirectionalLight("#ffe3c2", 2.15);
-  sun.position.set(-80, 90, 40);
+  const sun = new THREE.DirectionalLight("#ffe3c2", 2.35);
   sun.castShadow = true;
   sun.shadow.mapSize.set(2048, 2048);
   sun.shadow.camera.near = 10;
-  sun.shadow.camera.far = 280;
-  sun.shadow.camera.left = -120;
-  sun.shadow.camera.right = 120;
-  sun.shadow.camera.top = 120;
-  sun.shadow.camera.bottom = -120;
+  sun.shadow.camera.far = 320;
+  sun.shadow.camera.left = -130;
+  sun.shadow.camera.right = 130;
+  sun.shadow.camera.top = 130;
+  sun.shadow.camera.bottom = -130;
   scene.add(sun);
-  scene.add(new THREE.AmbientLight("#b9c4ce", 0.18));
+  scene.add(new THREE.AmbientLight("#b9c4ce", 0.2));
+  addSky(scene, sun);
 
   const tex = makeTextures();
   const mats = {
@@ -89,7 +87,11 @@ export function mountVillage(opts: MountOpts): VillageHandle {
     cobble: new THREE.MeshStandardMaterial({ map: tex.cobble, roughness: 0.95, metalness: 0.02 }),
     grass: new THREE.MeshStandardMaterial({ map: tex.grass, roughness: 0.95 }),
     dirt: new THREE.MeshStandardMaterial({ map: tex.dirt, roughness: 0.96 }),
-    rock: new THREE.MeshStandardMaterial({ color: "#6e675c", roughness: 0.94 }),
+    rock: new THREE.MeshStandardMaterial({ map: tex.rock, roughness: 0.94 }),
+    shutterGreen: new THREE.MeshStandardMaterial({ color: "#3d5a42", roughness: 0.8 }),
+    shutterBrown: new THREE.MeshStandardMaterial({ color: "#5a3a22", roughness: 0.82 }),
+    shutterBlue: new THREE.MeshStandardMaterial({ color: "#4a5560", roughness: 0.8 }),
+    copper: new THREE.MeshStandardMaterial({ color: "#8a6a3a", roughness: 0.45, metalness: 0.35 }),
   };
 
   const buckets = emptyBuckets();
@@ -98,6 +100,7 @@ export function mountVillage(opts: MountOpts): VillageHandle {
   scene.add(landmarkGroup);
 
   for (const b of data.buildings) {
+    if (b.kind === "house" && b.source === "osm" && b.area > 400) continue;
     if (b.kind === "castle") addCastle(b, buckets, colliders, landmarkGroup, tex);
     else if (b.kind === "church") addChurch(b, buckets, colliders);
     else if (b.kind === "townhall") addTownHall(b, buckets, colliders);
@@ -119,10 +122,21 @@ export function mountVillage(opts: MountOpts): VillageHandle {
   addMerged(buckets.roof, mats.roof);
   addMerged(buckets.wood, mats.wood);
   addMerged(buckets.dark, mats.dark, false);
+  addMerged(buckets.shutterGreen, mats.shutterGreen);
+  addMerged(buckets.shutterBrown, mats.shutterBrown);
+  addMerged(buckets.shutterBlue, mats.shutterBlue);
+  addMerged(buckets.copper, mats.copper);
 
   const streetGeos: THREE.BufferGeometry[] = [];
   for (const s of data.streets) {
-    const w = s.highway === "tertiary" || s.highway === "secondary" ? 6.2 : s.highway === "track" ? 2.6 : s.highway === "steps" || s.highway === "footway" ? 2.2 : 3.8;
+    const w =
+      s.highway === "tertiary" || s.highway === "secondary"
+        ? 6.2
+        : s.highway === "track"
+          ? 2.6
+          : s.highway === "steps" || s.highway === "footway"
+            ? 2.2
+            : 3.8;
     const g = streetRibbon(s.path, w);
     if (g) streetGeos.push(g);
   }
@@ -136,30 +150,31 @@ export function mountVillage(opts: MountOpts): VillageHandle {
     for (const s of streetGeos) s.dispose();
   }
 
+  const churchC = data.landmarks.church.center;
+  const castleC = data.landmarks.castle.center;
+
   const piazza = new THREE.CircleGeometry(11, 32);
   piazza.rotateX(-Math.PI / 2);
-  const churchC = data.landmarks.church.center;
   piazza.translate(churchC[0] - 2, heightAt(churchC[0], churchC[1]) + 0.06, churchC[1] + 6);
   const piazzaMesh = new THREE.Mesh(piazza, mats.cobble);
   piazzaMesh.receiveShadow = true;
   scene.add(piazzaMesh);
 
-  const castleC = data.landmarks.castle.center;
   const piazza2 = new THREE.CircleGeometry(9, 28);
   piazza2.rotateX(-Math.PI / 2);
   piazza2.translate(castleC[0] - 8, heightAt(castleC[0], castleC[1]) + 0.07, castleC[1] - 6);
-  const p2 = new THREE.Mesh(piazza2, mats.cobble);
-  p2.receiveShadow = true;
-  scene.add(p2);
+  scene.add(new THREE.Mesh(piazza2, mats.cobble));
 
   const fountain = new THREE.Group();
-  const basin = new THREE.CylinderGeometry(1.6, 1.75, 0.45, 20);
-  const basinM = new THREE.Mesh(basin, mats.stone);
-  basinM.castShadow = true;
-  fountain.add(basinM);
+  const basin = new THREE.Mesh(new THREE.CylinderGeometry(1.6, 1.75, 0.45, 20), mats.stone);
+  basin.castShadow = true;
+  fountain.add(basin);
   const col = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.28, 1.5, 10), mats.stone);
   col.position.y = 0.9;
   fountain.add(col);
+  const figure = new THREE.Mesh(new THREE.SphereGeometry(0.22, 10, 8), mats.stone);
+  figure.position.y = 1.75;
+  fountain.add(figure);
   const water = new THREE.Mesh(
     new THREE.CircleGeometry(1.35, 20),
     new THREE.MeshStandardMaterial({ color: "#6fa0b8", roughness: 0.12, metalness: 0.35 }),
@@ -170,78 +185,11 @@ export function mountVillage(opts: MountOpts): VillageHandle {
   fountain.position.set(churchC[0] + 1.5, heightAt(churchC[0], churchC[1]) + 0.22, churchC[1] + 6.5);
   scene.add(fountain);
 
-  const TERRAIN = 420;
-  const SEG = 96;
-  const terrainGeo = new THREE.PlaneGeometry(TERRAIN, TERRAIN, SEG, SEG);
-  terrainGeo.rotateX(-Math.PI / 2);
-  const pos = terrainGeo.attributes.position;
-  if (pos) {
-    for (let i = 0; i < pos.count; i++) {
-      const x = pos.getX(i);
-      const z = pos.getZ(i);
-      pos.setY(i, heightAt(x, z) - 0.04);
-    }
-    pos.needsUpdate = true;
-    terrainGeo.computeVertexNormals();
-  }
-  const terrain = new THREE.Mesh(terrainGeo, mats.grass);
-  terrain.receiveShadow = true;
-  scene.add(terrain);
-
-  const cliff = new THREE.Mesh(new THREE.PlaneGeometry(160, 40, 20, 4), mats.rock);
-  cliff.rotation.x = -Math.PI / 2.6;
-  cliff.position.set(130, -6, 70);
-  cliff.receiveShadow = true;
-  scene.add(cliff);
-
-  const treeGeo = new THREE.ConeGeometry(2.1, 7.2, 7);
-  const trunkGeo = new THREE.CylinderGeometry(0.22, 0.32, 1.6, 6);
-  const treeMat = new THREE.MeshStandardMaterial({ color: "#2f4a32", roughness: 0.9 });
-  const trunkMat = new THREE.MeshStandardMaterial({ color: "#4a3424", roughness: 0.9 });
-  const treeCount = 220;
-  const trees = new THREE.InstancedMesh(treeGeo, treeMat, treeCount);
-  const trunks = new THREE.InstancedMesh(trunkGeo, trunkMat, treeCount);
-  trees.castShadow = true;
-  const dummy = new THREE.Object3D();
-  let planted = 0;
-  let guard = 0;
-  while (planted < treeCount && guard < 4000) {
-    guard++;
-    const x = (Math.random() - 0.5) * 380;
-    const z = (Math.random() - 0.5) * 380;
-    if (Math.hypot(x - churchC[0], z - churchC[1]) < 28) continue;
-    if (Math.hypot(x - castleC[0], z - castleC[1]) < 22) continue;
-    if (Math.hypot(x, z) < 42 && Math.random() < 0.7) continue;
-    const y = heightAt(x, z);
-    const s = 0.7 + Math.random() * 0.9;
-    dummy.position.set(x, y + 3.5 * s, z);
-    dummy.scale.set(s, s, s);
-    dummy.rotation.y = Math.random() * Math.PI;
-    dummy.updateMatrix();
-    trees.setMatrixAt(planted, dummy.matrix);
-    dummy.position.set(x, y + 0.7, z);
-    dummy.scale.set(s, 1, s);
-    dummy.updateMatrix();
-    trunks.setMatrixAt(planted, dummy.matrix);
-    planted++;
-  }
-  scene.add(trees);
-  scene.add(trunks);
-
-  const mountain = new THREE.Mesh(
-    new THREE.ConeGeometry(220, 90, 7),
-    new THREE.MeshStandardMaterial({ color: "#8b9198", roughness: 1 }),
-  );
-  mountain.position.set(-380, 10, -520);
-  scene.add(mountain);
-  const mountain2 = mountain.clone();
-  mountain2.scale.set(1.3, 1.15, 1.3);
-  mountain2.position.set(90, 4, -640);
-  scene.add(mountain2);
-  const mountain3 = mountain.clone();
-  mountain3.scale.set(0.8, 0.7, 0.8);
-  mountain3.position.set(420, -8, -280);
-  scene.add(mountain3);
+  addTerrain(scene, mats);
+  addHorizon(scene);
+  addTrees(scene, data, churchC, castleC);
+  addCemetery(scene, data, mats);
+  addClouds(scene);
 
   const lampMat = new THREE.MeshStandardMaterial({ color: "#2a2420", roughness: 0.6 });
   const lampLightMat = new THREE.MeshStandardMaterial({
@@ -249,6 +197,8 @@ export function mountVillage(opts: MountOpts): VillageHandle {
     emissive: "#e8c888",
     emissiveIntensity: 0.7,
   });
+  const poleGeo = new THREE.CylinderGeometry(0.06, 0.08, 3.2, 6);
+  const bulbGeo = new THREE.SphereGeometry(0.12, 8, 8);
   for (const s of data.streets) {
     if (s.highway !== "residential" && s.highway !== "footway") continue;
     for (let i = 2; i < s.path.length - 1; i += 5) {
@@ -256,11 +206,11 @@ export function mountVillage(opts: MountOpts): VillageHandle {
       if (!p) continue;
       if (Math.hypot(p[0], p[1]) > 90) continue;
       const y = heightAt(p[0], p[1]);
-      const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.08, 3.2, 6), lampMat);
+      const pole = new THREE.Mesh(poleGeo, lampMat);
       pole.position.set(p[0] + 1.4, y + 1.6, p[1] + 0.4);
       pole.castShadow = true;
       scene.add(pole);
-      const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8), lampLightMat);
+      const bulb = new THREE.Mesh(bulbGeo, lampLightMat);
       bulb.position.set(p[0] + 1.4, y + 3.15, p[1] + 0.4);
       scene.add(bulb);
     }
@@ -275,11 +225,17 @@ export function mountVillage(opts: MountOpts): VillageHandle {
   );
   flag.position.set(castleC[0] - 10.2, heightAt(castleC[0], castleC[1]) + 6.2, castleC[1] - 8);
   scene.add(flag);
-  const flagW = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 0.35), new THREE.MeshStandardMaterial({ color: "#ffffff", side: THREE.DoubleSide }));
+  const flagW = new THREE.Mesh(
+    new THREE.PlaneGeometry(1.6, 0.35),
+    new THREE.MeshStandardMaterial({ color: "#ffffff", side: THREE.DoubleSide }),
+  );
   flagW.position.copy(flag.position);
   flagW.position.y += 0.35;
   scene.add(flagW);
-  const flagR = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 0.35), new THREE.MeshStandardMaterial({ color: "#ce2b37", side: THREE.DoubleSide }));
+  const flagR = new THREE.Mesh(
+    new THREE.PlaneGeometry(1.6, 0.35),
+    new THREE.MeshStandardMaterial({ color: "#ce2b37", side: THREE.DoubleSide }),
+  );
   flagR.position.copy(flag.position);
   flagR.position.y -= 0.35;
   scene.add(flagR);
@@ -288,28 +244,28 @@ export function mountVillage(opts: MountOpts): VillageHandle {
     {
       id: "castle",
       title: "Castello di Gamberale",
-      body: "Pseudo-medieval keep rebuilt after WWII and the 1984 earthquake. White plaster, stone merlons, clock tower, radio antenna.",
+      body: "White-plaster keep, stone merlons, clock tower and radio antenna. Post-1984 pseudo-medieval rebuild of a 12th-century fortress. One hall is used by the comune.",
       x: castleC[0],
       z: castleC[1],
     },
     {
       id: "church",
       title: "San Lorenzo Martire",
-      body: "18th-century parish church, single nave, side campanile. Patronal feast 10 August.",
+      body: "18th-century parish church, single nave, gable facade, side campanile. Patronal feast 10 August. Rebuilt 1709 after the 1706 earthquake.",
       x: churchC[0],
       z: churchC[1],
     },
     {
       id: "piazza",
       title: "Piazza San Lorenzo",
-      body: "Village entry piazza. Casa Pollice stands here in the real town. Fountain is a stand-in for Kmielauskas' Atteone.",
+      body: "Village entry piazza. Casa Pollice (18th c., limestone portal) stands here. Fountain stands in for Kmielauskas' Atteone.",
       x: churchC[0] + 1.5,
       z: churchC[1] + 6.5,
     },
     {
       id: "ridge",
-      title: "The spur",
-      body: "Rocky spur of Monte Sant'Antonio, 1,343 m. Sangro valley falls away to the east.",
+      title: "Monte Sant'Antonio spur",
+      body: "Rocky spur at 1,343 m, highest comune in the Province of Chieti. Sangro valley falls east toward Sant'Angelo del Pesco.",
       x: 40,
       z: 20,
     },
@@ -323,9 +279,12 @@ export function mountVillage(opts: MountOpts): VillageHandle {
   let locked = false;
   let walking = false;
   let placeName = "Piazza San Lorenzo";
+  let placeBody = landmarks[2]!.body;
   let disposed = false;
 
   const keysOf = () => injected ?? held;
+  const fwd = new THREE.Vector3();
+  const rightV = new THREE.Vector3();
 
   const onKeyDown = (e: KeyboardEvent) => {
     held.add(e.code);
@@ -354,6 +313,14 @@ export function mountVillage(opts: MountOpts): VillageHandle {
     locked = document.pointerLockElement === canvas;
   };
   document.addEventListener("pointerlockchange", onLock);
+
+  const onClick = () => {
+    if (!opts.walkingRef.current) return;
+    canvas.requestPointerLock?.({ unadjustedMovement: true } as PointerLockOptions).catch(() => {
+      canvas.requestPointerLock();
+    });
+  };
+  canvas.addEventListener("click", onClick);
 
   const touch = { active: false, lx: 0, ly: 0, lookX: 0, lookY: 0, idMove: -1, idLook: -1 };
   canvas.addEventListener("pointerdown", (e) => {
@@ -453,29 +420,29 @@ export function mountVillage(opts: MountOpts): VillageHandle {
     walking = opts.walkingRef.current;
 
     const keys = keysOf();
-    const forward = new THREE.Vector3(-Math.sin(yaw), 0, -Math.cos(yaw));
-    const right = new THREE.Vector3(Math.cos(yaw), 0, -Math.sin(yaw));
+    fwd.set(-Math.sin(yaw), 0, -Math.cos(yaw));
+    rightV.set(Math.cos(yaw), 0, -Math.sin(yaw));
     let ax = 0;
     let az = 0;
     if (walking) {
       if (keys.has("KeyW") || keys.has("ArrowUp")) {
-        ax += forward.x;
-        az += forward.z;
+        ax += fwd.x;
+        az += fwd.z;
       }
       if (keys.has("KeyS") || keys.has("ArrowDown")) {
-        ax -= forward.x;
-        az -= forward.z;
+        ax -= fwd.x;
+        az -= fwd.z;
       }
       if (keys.has("KeyD") || keys.has("ArrowRight")) {
-        ax += right.x;
-        az += right.z;
+        ax += rightV.x;
+        az += rightV.z;
       }
       if (keys.has("KeyA") || keys.has("ArrowLeft")) {
-        ax -= right.x;
-        az -= right.z;
+        ax -= rightV.x;
+        az -= rightV.z;
       }
-      ax += right.x * touch.lx + forward.x * -touch.ly;
-      az += right.z * touch.lx + forward.z * -touch.ly;
+      ax += rightV.x * touch.lx + fwd.x * -touch.ly;
+      az += rightV.z * touch.lx + fwd.z * -touch.ly;
     }
     const len = Math.hypot(ax, az);
     if (len > 1) {
@@ -484,10 +451,8 @@ export function mountVillage(opts: MountOpts): VillageHandle {
     }
     const sprint = keys.has("ShiftLeft") || keys.has("ShiftRight");
     const target = (sprint ? SPRINT : WALK) * (len > 0 ? 1 : 0);
-    const wishX = ax * target;
-    const wishZ = az * target;
-    vx += (wishX - vx) * Math.min(1, dt * 10);
-    vz += (wishZ - vz) * Math.min(1, dt * 10);
+    vx += (ax * target - vx) * Math.min(1, dt * 10);
+    vz += (az * target - vz) * Math.min(1, dt * 10);
     speed = Math.hypot(vx, vz);
 
     if (walking) {
@@ -510,9 +475,7 @@ export function mountVillage(opts: MountOpts): VillageHandle {
       yawObject.position.set(ox, oy, oz);
       const lookX = (castleC[0] + churchC[0]) * 0.5;
       const lookZ = (castleC[1] + churchC[1]) * 0.5;
-      const lx = lookX - ox;
-      const lz = lookZ - oz;
-      yawObject.rotation.set(0, Math.atan2(-lx, -lz), 0);
+      yawObject.rotation.set(0, Math.atan2(-(lookX - ox), -(lookZ - oz)), 0);
       pitchObject.rotation.x = -0.22;
     }
 
@@ -526,9 +489,10 @@ export function mountVillage(opts: MountOpts): VillageHandle {
       }
     }
     placeName = nd < 28 ? nearest.title : "Gamberale ridge";
+    placeBody = nd < 28 ? nearest.body : "Packed borgo on Monte Sant'Antonio. First-draft walkable reconstruction.";
     if (placeName !== lastPlace) {
       lastPlace = placeName;
-      opts.onPlace?.(placeName);
+      opts.onPlace?.(placeName, placeBody);
     }
 
     flag.position.x = castleC[0] - 10.2 + Math.sin(clock.getElapsed() * 1.4) * 0.05;
@@ -566,6 +530,7 @@ export function mountVillage(opts: MountOpts): VillageHandle {
       window.removeEventListener("blur", clearKeys);
       document.removeEventListener("mousemove", onMouse);
       document.removeEventListener("pointerlockchange", onLock);
+      canvas.removeEventListener("click", onClick);
       ro.disconnect();
       clock.dispose();
       disposeTextures(tex);
