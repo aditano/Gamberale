@@ -3,7 +3,9 @@
 Walkable first-person 3D recreation of **Gamberale**, the highest village in the
 Province of Chieti, Abruzzo (1,343 m, Maiella National Park).
 
-Live: [aditano.github.io/Gamberale](https://aditano.github.io/Gamberale/)
+- **Live:** [gamberale.pages.dev](https://gamberale.pages.dev)
+- **GitHub Pages:** [aditano.github.io/Gamberale](https://aditano.github.io/Gamberale/)
+- **Repo:** [github.com/aditano/Gamberale](https://github.com/aditano/Gamberale)
 
 This is a **first draft**. Landmark footprints and streets come from
 OpenStreetMap. House packing in the historic core is densified because OSM only
@@ -26,10 +28,13 @@ geography, history, architecture, economy, visual notes, OSM notes, sources.
 Processed map: [`public/data/gamberale.json`](./public/data/gamberale.json)
 (ODbL 1.0 for OSM-derived geometry).
 
-## GitHub Pages
+## Hosting
 
-The site deploys from GitHub Actions (`dist/`). A static copy also lives in
-`docs/` so the repo can be served from `main /docs` if needed.
+Cloudflare Pages builds `main` to [gamberale.pages.dev](https://gamberale.pages.dev).
+GitHub Actions also builds `dist/` for GitHub Pages. Enable it under
+**Settings → Pages → GitHub Actions** if `github.io/Gamberale` is still a 404.
+
+A static copy lives in `docs/` as a fallback.
 
 ## Run locally
 

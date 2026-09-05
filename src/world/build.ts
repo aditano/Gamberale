@@ -364,7 +364,12 @@ export function addTownHall(b: Building, buckets: Buckets, colliders: Collider[]
 }
 
 export function mergeBucket(list: THREE.BufferGeometry[]): THREE.BufferGeometry | null {
-  const usable = list.filter((g) => g.getAttribute("position")).map(withUv);
+  const usable: THREE.BufferGeometry[] = [];
+  for (const g of list) {
+    if (!g.getAttribute("position")) continue;
+    const withU = withUv(g);
+    usable.push(withU.index ? withU.toNonIndexed() : withU);
+  }
   if (!usable.length) return null;
   const merged = mergeGeometries(usable, false);
   for (const g of usable) g.dispose();

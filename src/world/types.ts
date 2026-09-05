@@ -68,6 +68,8 @@ export type Landmark = {
 export type ControlsProbe = {
   getYaw: () => number;
   getSpeed: () => number;
+  getX?: () => number;
+  getZ?: () => number;
   setKeys: (codes: string[]) => void;
   setSteer?: (v: number) => void;
 };

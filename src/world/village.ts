@@ -503,6 +503,8 @@ export function mountVillage(opts: MountOpts): VillageHandle {
   window.__controlsTest = {
     getYaw: () => yaw,
     getSpeed: () => speed,
+    getX: () => px,
+    getZ: () => pz,
     setKeys: (codes) => {
       injected = new Set(codes);
     },
